@@ -1,0 +1,7 @@
+{
+  "version": "dev-2025-11-11-2",
+  "imports": {
+    "remotes/dashboard": "http://localhost:4201/main.js",
+    "remotes/content-remote": "http://localhost:4202/assets/remote-entry.js"
+  }
+}

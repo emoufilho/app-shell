@@ -24,7 +24,7 @@ export class ImportMapService {
       imports: json.imports ?? {},
       scopes: json.scopes ?? {},
     });
-    document.head.appendChild(script);
+  document.head.appendChild(script);
     this.loaded = true;
     // Optional: console.debug version
     if (json.version) {

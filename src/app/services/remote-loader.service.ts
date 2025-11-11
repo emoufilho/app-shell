@@ -19,9 +19,7 @@ export class RemoteLoaderService {
    * Estratégia Native Federation: usamos import() ESM em vez de injetar <script>.
    */
   loadElement(urlOrSpecifier: string, tagName: string, opts: LoadOptions = {}): Promise<void> {
-    if (customElements.get(tagName)) {
-      return Promise.resolve();
-    }
+    if (customElements.get(tagName)) return Promise.resolve();
 
     const inflightByTag = this.tagCache.get(tagName);
     if (inflightByTag) return inflightByTag;
@@ -33,10 +31,18 @@ export class RemoteLoaderService {
 
     const importOnce = async () => {
       if (customElements.get(tagName)) return;
-      // import() nativo. Se falhar por CORS ou 404, cairá no catch externo.
-      await import(/* @vite-ignore */ urlOrSpecifier);
+      try {
+        await import(/* @vite-ignore */ urlOrSpecifier);
+      } catch (e: any) {
+        // Em alguns casos (Angular <=12 + import map), fallback para injeção de <script type="module"> pode ser mais compatível.
+        // Detecta erro de sintaxe de módulo ou falha de resolução.
+        if (/Failed|Cannot|SyntaxError/.test(String(e))) {
+          await this.injectScriptFallback(urlOrSpecifier, tagName, timeoutMs);
+        } else {
+          throw e;
+        }
+      }
       if (!customElements.get(tagName)) {
-        // Espera explícita caso o módulo registre de forma assíncrona.
         await customElements.whenDefined(tagName);
       }
     };
@@ -55,11 +61,11 @@ export class RemoteLoaderService {
         try {
           await Promise.race([importOnce(), timeoutPromise]);
           const tid = (controller.signal as any).timeoutId; if (tid) window.clearTimeout(tid);
-          return; // sucesso
+          return;
         } catch (err) {
           const tid = (controller.signal as any).timeoutId; if (tid) window.clearTimeout(tid);
           if (attempt >= retries) throw err;
-          await new Promise((r) => setTimeout(r, retryDelayMs));
+          await new Promise(r => setTimeout(r, retryDelayMs));
           attempt++;
         }
       }
@@ -69,5 +75,45 @@ export class RemoteLoaderService {
     this.cache.set(urlOrSpecifier, p);
     this.tagCache.set(tagName, p);
     return p;
+  }
+
+  private injectScriptFallback(url: string, tagName: string, timeoutMs: number): Promise<void> {
+    if (customElements.get(tagName)) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = url;
+      script.async = true;
+      let timeoutId: number | undefined;
+      const cleanup = () => {
+        script.onload = null;
+        script.onerror = null;
+        if (timeoutId) window.clearTimeout(timeoutId);
+      };
+      const done = () => {
+        if (customElements.get(tagName)) {
+          cleanup();
+          resolve();
+        } else {
+          customElements.whenDefined(tagName).then(() => {
+            cleanup();
+            resolve();
+          }).catch(err => {
+            cleanup();
+            reject(err);
+          });
+        }
+      };
+      script.onload = done;
+      script.onerror = () => {
+        cleanup();
+        reject(new Error(`Falha ao carregar script remoto: ${url}`));
+      };
+      timeoutId = window.setTimeout(() => {
+        cleanup();
+        reject(new Error(`Timeout ao carregar: ${url}`));
+      }, timeoutMs);
+      document.head.appendChild(script);
+    });
   }
 }

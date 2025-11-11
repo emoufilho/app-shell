@@ -11,6 +11,11 @@ export class RemoteRegistryService {
   get(id: string): RemoteDefinition {
     const def = this.byId.get(id);
     if (!def) {
+      // Loga IDs disponíveis para facilitar debug quando há typo.
+      // Evita múltiplos erros encadeados em produção.
+      // Poderíamos opcionalmente retornar um stub.
+      // eslint-disable-next-line no-console
+      console.error('[RemoteRegistry] IDs disponíveis:', [...this.byId.keys()].join(', '));
       throw new Error(`Remote não encontrado no manifest: ${id}`);
     }
     return def;

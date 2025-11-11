@@ -29,10 +29,24 @@ export class RemoteElementHostComponent implements OnInit, OnDestroy {
   async ngOnInit() {
     try {
       const def = this.registry.get(this.remoteId);
-    
+      
       if (!customElements.get(def.tag)) {
-        // Usa specifier do import map se definido, senão URL direta.
-        await this.loader.loadElement(def.specifier || def.url, def.tag, def.loader);
+        const primary = def.specifier || def.url;
+        try {
+          await this.loader.loadElement(primary, def.tag, def.loader);
+        } catch (e) {
+          // Fallback: se falhar ao importar pelo specifier, tenta URL direta.
+          if (def.specifier && def.url && primary !== def.url) {
+            console.warn('[RemoteHost] fallback para URL direta do remote', def.id, def.url);
+            await this.loader.loadElement(def.url, def.tag, {
+              timeoutMs: def.loader?.timeoutMs ?? 20000,
+              retries: (def.loader?.retries ?? 0) + 1,
+              retryDelayMs: def.loader?.retryDelayMs ?? 1200,
+            });
+          } else {
+            throw e;
+          }
+        }
       }
 
       this.mount(def.tag);

@@ -27,5 +27,17 @@ export const REMOTE_MANIFEST: RemoteDefinition[] = [
       retryDelayMs: 1200,
     },
   },
+  {
+    id: 'content-rmt',
+    tag: 'content-remote',
+    url: 'http://localhost:4202/assets/remote-entry.js',
+    specifier: 'remotes/content-remote',
+    preload: false,
+    loader: {
+      timeoutMs: 15000,
+      retries: 1,
+      retryDelayMs: 1200,
+    },
+  },
   // Adicione outros remotes aqui
 ];

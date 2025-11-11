@@ -7,7 +7,9 @@ import { RemoteRegistryService } from './services/remote-registry.service';
 import { RemoteLoaderService } from './services/remote-loader.service';
 
 function importMapInitializer(importMap: ImportMapService) {
-  return () => importMap.load('/assets/import-map.dev.json');
+  // assets são servidos a partir da pasta "public" (ver angular.json),
+  // então publicamos o import map diretamente em "/import-map.dev.json".
+  return () => importMap.load('/import-map.dev.json');
 }
 
 function preloadCriticalInitializer(registry: RemoteRegistryService, loader: RemoteLoaderService) {
