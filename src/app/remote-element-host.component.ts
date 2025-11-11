@@ -31,7 +31,8 @@ export class RemoteElementHostComponent implements OnInit, OnDestroy {
       const def = this.registry.get(this.remoteId);
     
       if (!customElements.get(def.tag)) {
-        await this.loader.loadElement(def.url, def.tag, def.loader);
+        // Usa specifier do import map se definido, senão URL direta.
+        await this.loader.loadElement(def.specifier || def.url, def.tag, def.loader);
       }
 
       this.mount(def.tag);

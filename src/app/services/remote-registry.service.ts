@@ -23,7 +23,7 @@ export class RemoteRegistryService {
   async preloadCritical(loader: RemoteLoaderService): Promise<void> {
     const critical = this.list().filter(d => d.preload);
     await Promise.all(
-      critical.map(d => loader.loadElement(d.url, d.tag, d.loader))
+      critical.map(d => loader.loadElement(d.specifier || d.url, d.tag, d.loader))
     );
   }
 }

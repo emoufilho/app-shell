@@ -1,0 +1,6 @@
+{
+  "version": "dev-2025-11-11-1",
+  "imports": {
+    "remotes/dashboard": "http://localhost:4201/main.js"
+  }
+}
