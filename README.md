@@ -25,3 +25,22 @@ Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To u
 ## Further help
 
 To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## Remotes e Import Map
+
+- O shell carrega um Import Map em runtime via `APP_INITIALIZER` (`ImportMapService`).
+- O arquivo utilizado em desenvolvimento é `public/import-map.dev.json`, servido como `/import-map.dev.json`.
+- O manifest de remotes está em `src/app/remotes/remote-manifest.ts` e define:
+	- `id` (identificador lógico usado no shell)
+	- `tag` (custom element exposto pelo remote)
+	- `specifier` (chave do import map, ex.: `remotes/dashboard`)
+	- `url` (fallback direto)
+
+Fluxo em tempo de execução:
+1. O Import Map é injetado no `<head>` (type=`importmap`).
+2. O componente `app-remote-host` resolve o remote via manifest e carrega pelo `specifier` mapeado.
+3. O remote registra o web component (ex.: `<dashboard-remote>`), que é montado no DOM.
+
+Padrões recomendados:
+- Mantenha apenas um arquivo de import map ativo por ambiente (ex.: `public/import-map.dev.json`).
+- Para produção, crie `public/import-map.prod.json` e condicione a URL carregada pelo `ImportMapService` (ou gere via script de build).
