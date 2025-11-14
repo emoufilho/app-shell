@@ -1,3 +1,14 @@
-<p>App Shell</p>
-<app-remote-host remoteId="dashboard"></app-remote-host>
-<app-remote-host remoteId="content-rmt"></app-remote-host>
+
+	<p>App Shell</p>
+    @if (dashboardValor !== undefined) {
+        <p>Valor recebido do dashboard: {{ dashboardValor }}</p>
+    }
+
+    @if (showAll) {
+        <button (click)="changeNome()">Alterar nome</button>
+        <app-remote-host remoteId="dashboard" [props]="{ nome: nome }" (valorChange)="atualizarDashboardValor($event)"></app-remote-host>        
+        <app-remote-host remoteId="content-rmt" [props]="{ nome: nome }"></app-remote-host>
+        <app-remote-host remoteId="header" [props]="{ nome: nome }"></app-remote-host>
+    }
+
+    <router-outlet></router-outlet>

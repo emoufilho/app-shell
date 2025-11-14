@@ -39,5 +39,17 @@ export const REMOTE_MANIFEST: RemoteDefinition[] = [
       retryDelayMs: 1200,
     },
   },
+  {
+    id: 'header',
+    tag: 'header-remote',
+    url: 'http://localhost:4203/main.js',
+    specifier: 'remotes/header-remote',
+    preload: false,
+    loader: {
+      timeoutMs: 15000,
+      retries: 1,
+      retryDelayMs: 1200,
+    },
+  },
   // Adicione outros remotes aqui
 ];

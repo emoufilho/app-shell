@@ -1,4 +1,5 @@
-import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild, OnChanges, SimpleChanges, ChangeDetectorRef, Output, EventEmitter } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { NgIf } from '@angular/common';
 import { RemoteRegistryService } from './services/remote-registry.service';
 import { RemoteLoaderService } from './services/remote-loader.service';
@@ -14,21 +15,28 @@ import { RemoteLoaderService } from './services/remote-loader.service';
   `,
   styles: [`.remote-host{display:block;min-height:80px;}`]
 })
-export class RemoteElementHostComponent implements OnInit, OnDestroy {
+export class RemoteElementHostComponent implements OnInit, OnDestroy, OnChanges {
   @Input() remoteId!: string;
   @Input() props?: Record<string, unknown>;
   @ViewChild('container', { static: true }) container!: ElementRef<HTMLElement>;
+  @Output() valorChange = new EventEmitter<any>();
 
   ready = false;
 
   constructor(
     private registry: RemoteRegistryService,
     private loader: RemoteLoaderService,
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   async ngOnInit() {
     try {
-      const def = this.registry.get(this.remoteId);
+  const id = this.remoteId || (this.route.snapshot.data['remoteId'] as string);
+  const def = this.registry.get(id);
+  // Props vindas da rota (data.props) tem precedência sobre @Input props.
+  const routeProps = (this.route.snapshot.data['props'] as Record<string, unknown>) || {};
+  this.props = { ...(this.props || {}), ...routeProps };
       
       if (!customElements.get(def.tag)) {
         const primary = def.specifier || def.url;
@@ -78,5 +86,29 @@ export class RemoteElementHostComponent implements OnInit, OnDestroy {
     }
 
     host.appendChild(el);
+    // Escuta eventos de saída específicos do remote (ex: valorChange do dashboard)
+    el.addEventListener('valorChange', (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      this.valorChange.emit(detail);
+    });
+    this.cdr.markForCheck();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+  if (changes['props'] && this.ready && customElements.get(this.registry.get(this.remoteId || (this.route.snapshot.data['remoteId'] as string)).tag)) {
+      // Atualiza atributos/propriedades do elemento já montado.
+      const host = this.container.nativeElement;
+      const el = host.querySelector(this.registry.get(this.remoteId || (this.route.snapshot.data['remoteId'] as string)).tag) as any;
+      if (el && this.props) {
+        for (const [k, v] of Object.entries(this.props)) {
+          if (v !== null && typeof v === 'object') {
+            el[k] = v;
+          } else {
+            el.setAttribute(k, String(v));
+          }
+        }
+        this.cdr.markForCheck();
+      }
+    }
   }
 }

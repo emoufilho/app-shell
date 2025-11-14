@@ -1,7 +1,8 @@
 {
-  "version": "dev-2025-11-11-2",
+  "version": "dev-2025-11-14-1",
   "imports": {
     "remotes/dashboard": "http://localhost:4201/main.js",
-    "remotes/content-remote": "http://localhost:4202/assets/remote-entry.js"
+    "remotes/content-remote": "http://localhost:4202/assets/remote-entry.js",
+    "remotes/header-remote": "http://localhost:4203/main.js"
   }
 }
